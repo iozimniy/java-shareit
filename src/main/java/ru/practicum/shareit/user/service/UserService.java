@@ -11,9 +11,11 @@ public interface UserService {
 
     UserDto getUserById(Long id);
 
-    Collection<User> getAllUsers();
+    Collection<UserDto> getAllUsers();
 
     UserDto update(Long id, User user);
 
     void delete(Long id);
+
+    void validateId(Long id);
 }

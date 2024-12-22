@@ -6,6 +6,7 @@ import ru.practicum.shareit.user.model.User;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class InMemoryUserStorage implements UserStorage {
@@ -31,14 +32,15 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     @Override
-    public User getUserById(Long id) {
-        return users.get(id);
+    public Optional<User> getUserById(Long id) {
+        return users.values().stream()
+                .filter(user -> user.getId() == id)
+                .findAny();
     }
 
     @Override
-    public User update(Long id, User user) {
-        user.setId(id);
-        users.put(id, user);
+    public User update(User user) {
+        users.put(user.getId(), user);
         return user;
     }
 

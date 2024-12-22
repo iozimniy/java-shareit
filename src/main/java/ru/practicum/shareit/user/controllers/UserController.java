@@ -39,7 +39,7 @@ public class UserController {
     }
 
     @GetMapping
-    public Collection<User> getUsers() {
+    public Collection<UserDto> getUsers() {
         log.info("Получен запрос на получение информации обо всех пользователях");
         return userService.getAllUsers();
     }

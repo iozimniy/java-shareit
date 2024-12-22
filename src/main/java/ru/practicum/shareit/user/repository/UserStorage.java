@@ -3,6 +3,7 @@ package ru.practicum.shareit.user.repository;
 import ru.practicum.shareit.user.model.User;
 
 import java.util.Collection;
+import java.util.Optional;
 
 public interface UserStorage {
     User create(User user);
@@ -11,9 +12,9 @@ public interface UserStorage {
 
     boolean contains(Long id);
 
-    User getUserById(Long id);
+    Optional<User> getUserById(Long id);
 
-    User update(Long id, User user);
+    User update(User user);
 
     void delete(Long id);
 }
