@@ -16,7 +16,7 @@ import java.util.Collection;
  */
 @RestController
 @RequestMapping("/items")
-@Slf4j
+@Slf4j()
 public class ItemController {
     ItemService itemService;
 
@@ -27,7 +27,7 @@ public class ItemController {
     @PostMapping
     public ItemDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
                           @Valid @RequestBody ItemDto itemDto) throws ValidationException, NotFoundException {
-        log.info("Получен запрос на создание вещи: {} от пользователя с id {}", itemDto, userId);
+        log.debug("Получен запрос на создание вещи: {} от пользователя с id {}", itemDto, userId);
         return itemService.create(userId, itemDto);
     }
 
@@ -35,26 +35,26 @@ public class ItemController {
     public ItemDto update(@RequestHeader("X-Sharer-User-Id") Long userId,
                           @PathVariable("id") Long itemId,
                           @RequestBody ItemDto itemDto) throws ValidationException, NotFoundException {
-        log.info("Получен запрос на изменение вещи {} c id {} от пользователя с id {}", itemDto, itemId, userId);
+        log.debug("Получен запрос на изменение вещи {} c id {} от пользователя с id {}", itemDto, itemId, userId);
         return itemService.update(itemId, userId, itemDto);
     }
 
     @GetMapping("/{itemId}")
     public ItemDto getItem(@PathVariable Long itemId) throws NotFoundException {
-        log.info("Получен запрос на просмотр вещи с id {}", itemId);
+        log.debug("Получен запрос на просмотр вещи с id {}", itemId);
         return itemService.getItem(itemId);
     }
 
     @GetMapping
     @SneakyThrows
     public Collection<ItemDto> getUserItems(@RequestHeader("X-Sharer-User-Id") Long userId) {
-        log.info("Получен запрос на просмотр всех вещей пользователя с id {}", userId);
+        log.debug("Получен запрос на просмотр всех вещей пользователя с id {}", userId);
         return itemService.getUserItems(userId);
     }
 
     @GetMapping("/search")
     public Collection<ItemDto> search(@RequestParam String text) {
-        log.info("Получен запрс на поиск по тексту: {}", text);
+        log.debug("Получен запрс на поиск по тексту: {}", text);
         return itemService.search(text);
     }
 }

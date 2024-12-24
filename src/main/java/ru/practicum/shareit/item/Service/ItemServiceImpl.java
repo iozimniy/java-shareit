@@ -14,6 +14,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
 
+import org.springframework.util.StringUtils;
+
 @Service
 @AllArgsConstructor
 public class ItemServiceImpl implements ItemService {
@@ -59,7 +61,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Collection<ItemDto> search(String text) {
-        if (text.isEmpty()) {
+        if (!StringUtils.hasText(text)) {
             return Collections.EMPTY_LIST;
         }
         return itemStorage.getByText(text).stream()
