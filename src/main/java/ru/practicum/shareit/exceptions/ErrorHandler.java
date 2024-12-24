@@ -29,4 +29,11 @@ public class ErrorHandler {
         log.info("Отправлен ответ на исключение ConflictException: {}", e.getMessage());
         return new ErrorResponse("Ошибка запроса", e.getMessage());
     }
+
+    @ExceptionHandler
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponse handlerServerError(final RuntimeException e) {
+        log.info("Отправлен ответ на исключение RuntimeException: {}", e.getMessage());
+        return new ErrorResponse("Ошибка обработки запроса", e.getMessage());
+    }
 }
