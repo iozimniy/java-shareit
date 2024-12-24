@@ -1,24 +1,24 @@
-package ru.practicum.shareit.item.model;
+package ru.practicum.shareit.user.model;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import ru.practicum.shareit.request.model.ItemRequest;
 
 /**
  * TODO Sprint add-controllers.
  */
 
-@AllArgsConstructor
 @Getter
 @Setter
 @EqualsAndHashCode(of = {"id"})
-public class Item {
+@AllArgsConstructor
+public class User {
     Long id;
+    @NotBlank
     String name;
-    String description;
-    Boolean available;
-    Long ownerId;
-    ItemRequest request;
+    @Email
+    String email;
 }
