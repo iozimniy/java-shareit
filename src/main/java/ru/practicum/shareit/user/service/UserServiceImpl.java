@@ -27,16 +27,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(Long id) throws NotFoundException {
-        User user = userStorage.getUserById(id)
+        return userStorage.getUserById(id)
+                .map(UserMapper::toUserDto)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден по id " + id));
-
-        return UserMapper.toUserDto(user);
     }
 
     @Override
     public Collection<UserDto> getAllUsers() {
         return userStorage.getAllUsers().stream()
-                .map(user -> UserMapper.toUserDto(user))
+                .map(UserMapper::toUserDto)
                 .collect(Collectors.toList());
     }
 
@@ -44,7 +43,6 @@ public class UserServiceImpl implements UserService {
     public UserDto update(Long id, User user) throws ConflictException, ValidationException, NotFoundException {
         User oldUser = userStorage.getUserById(id)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден по id " + id));
-
         user = updateUser(oldUser, user);
         return UserMapper.toUserDto(userStorage.update(user));
     }

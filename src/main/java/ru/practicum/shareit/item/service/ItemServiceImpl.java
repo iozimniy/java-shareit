@@ -1,7 +1,8 @@
-package ru.practicum.shareit.item.Service;
+package ru.practicum.shareit.item.service;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.dto.ItemDto;
@@ -13,8 +14,6 @@ import ru.practicum.shareit.user.service.UserService;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Collectors;
-
-import org.springframework.util.StringUtils;
 
 @Service
 @AllArgsConstructor
@@ -45,17 +44,16 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto getItem(Long itemId) throws NotFoundException {
-        Item item = itemStorage.getById(itemId)
+        return itemStorage.getById(itemId)
+                .map(ItemMapper::toItemDto)
                 .orElseThrow(() -> new NotFoundException("Вещь не найдена по id"));
-
-        return ItemMapper.toItemDto(item);
     }
 
     @Override
     public Collection<ItemDto> getUserItems(Long userId) throws NotFoundException {
         validateUserId(userId);
         return itemStorage.getUserItems(userId).stream()
-                .map(item -> ItemMapper.toItemDto(item))
+                .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
@@ -65,7 +63,7 @@ public class ItemServiceImpl implements ItemService {
             return Collections.EMPTY_LIST;
         }
         return itemStorage.getByText(text).stream()
-                .map(item -> ItemMapper.toItemDto(item))
+                .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 

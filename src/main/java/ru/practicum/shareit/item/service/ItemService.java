@@ -1,4 +1,4 @@
-package ru.practicum.shareit.item.Service;
+package ru.practicum.shareit.item.service;
 
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
