@@ -21,13 +21,13 @@ public class UserServiceImpl implements UserService {
     UserStorage userStorage;
 
     @Override
-    public UserDto create(User newUser) {
+    public UserDto create(User newUser) throws ConflictException, ValidationException {
         validateEmail(newUser);
         return UserMapper.toUserDto(userStorage.create(newUser));
     }
 
     @Override
-    public UserDto getUserById(Long id) {
+    public UserDto getUserById(Long id) throws NotFoundException {
         Optional<User> user = userStorage.getUserById(id);
         if (user.isPresent()) {
             return UserMapper.toUserDto(user.get());
@@ -44,7 +44,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto update(Long id, User user) {
+    public UserDto update(Long id, User user) throws ConflictException, ValidationException, NotFoundException {
         Optional<User> oldUser = userStorage.getUserById(id);
         if (oldUser.isPresent()) {
             user = updateUser(oldUser.get(), user);
@@ -54,7 +54,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private User updateUser(User oldUser, User newUser) {
+    private User updateUser(User oldUser, User newUser) throws ConflictException, ValidationException {
         newUser.setId(oldUser.getId());
 
         if (newUser.getName() == null) {
@@ -71,27 +71,29 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void delete(Long id) {
+    public void delete(Long id) throws NotFoundException {
         validateId(id);
         userStorage.delete(id);
     }
 
     @Override
-    public void validateId(Long id) {
+    public void validateId(Long id) throws NotFoundException {
         if (!userStorage.contains(id)) {
             throw new NotFoundException("Пользователь не найден по id " + id);
         }
     }
 
-    private void validateEmail(User newUser) {
+    private void validateEmail(User newUser) throws ValidationException, ConflictException {
         if (newUser.getEmail() == null) {
             throw new ValidationException("Не предоставлен email для создания пользователя");
         }
 
-        userStorage.getAllUsers().stream().forEach(user -> {
-            if (user.getEmail().equals(newUser.getEmail())) {
-                throw new ConflictException("Пользователь с таким email уже существует.");
-            }
-        });
+        Collection<String> emails = userStorage.getAllUsers().stream()
+                .map(user -> user.getEmail())
+                .toList();
+
+        if (emails.contains(newUser.getEmail())) {
+            throw new ConflictException("Не предоставлен email для создания пользователя");
+        }
     }
 }

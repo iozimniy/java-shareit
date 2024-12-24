@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.exceptions.ConflictException;
+import ru.practicum.shareit.exceptions.NotFoundException;
+import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.service.UserService;
@@ -27,13 +30,13 @@ public class UserController {
     }
 
     @PostMapping
-    public UserDto create(@Valid @RequestBody User user) {
+    public UserDto create(@Valid @RequestBody User user) throws ValidationException, ConflictException {
         log.info("Получен запроса на создание пользователя: {}", user);
         return userService.create(user);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
+    public ResponseEntity<UserDto> getUser(@PathVariable Long id) throws NotFoundException {
         log.info("Получен запрос на получение информации о пользователе с id {}", id);
         return ResponseEntity.status(HttpStatus.OK).body(userService.getUserById(id));
     }
@@ -45,13 +48,13 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<UserDto> updateUser(@RequestBody User user, @PathVariable Long id) {
+    public ResponseEntity<UserDto> updateUser(@RequestBody User user, @PathVariable Long id) throws ValidationException, ConflictException, NotFoundException {
         log.info("Получен запрос на изменение пользователя {} с id {}", user, id);
         return ResponseEntity.status(HttpStatus.OK).body(userService.update(id, user));
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) throws NotFoundException {
         userService.delete(id);
     }
 }

@@ -23,7 +23,7 @@ public class ItemServiceImpl implements ItemService {
     ItemStorage itemStorage;
 
     @Override
-    public ItemDto create(Long userId, ItemDto itemDto) {
+    public ItemDto create(Long userId, ItemDto itemDto) throws NotFoundException, ValidationException {
         validateUserId(userId);
         validateItemDtoForCreate(itemDto);
         Item item = ItemMapper.toItem(itemDto, userId);
@@ -32,7 +32,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto update(Long itemId, Long userId, ItemDto itemDto) {
+    public ItemDto update(Long itemId, Long userId, ItemDto itemDto) throws NotFoundException, ValidationException {
         validateUserId(userId);
         validateItemDtoForUpdate(itemDto);
         Optional<Item> oldItem = itemStorage.getItemByOwner(itemId, userId);
@@ -46,7 +46,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto getItem(Long itemId) {
+    public ItemDto getItem(Long itemId) throws NotFoundException {
         Optional<Item> item = itemStorage.getById(itemId);
         if (item.isPresent()) {
             return ItemMapper.toItemDto(item.get());
@@ -56,7 +56,7 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Collection<ItemDto> getUserItems(Long userId) {
+    public Collection<ItemDto> getUserItems(Long userId) throws NotFoundException {
         validateUserId(userId);
         return itemStorage.getUserItems(userId).stream()
                 .map(item -> ItemMapper.toItemDto(item))
@@ -92,19 +92,18 @@ public class ItemServiceImpl implements ItemService {
         return newItem;
     }
 
-    private void validateUserId(Long userId) {
+    private void validateUserId(Long userId) throws NotFoundException {
         userService.validateId(userId);
     }
 
-    private void validateItemDtoForCreate(ItemDto itemDto) {
+    private void validateItemDtoForCreate(ItemDto itemDto) throws ValidationException {
         if (itemDto.getName() == null || itemDto.getDescription() == null) {
             throw new ValidationException("У вещи должно быть название и описание.");
-        } else if (itemDto.getAvailable() == null) {
+        } else if (itemDto.getAvailable() == null)
             throw new ValidationException("Необходимо указать доступность вещи для бронирования");
-        }
     }
 
-    private void validateItemDtoForUpdate(ItemDto itemDto) {
+    private void validateItemDtoForUpdate(ItemDto itemDto) throws ValidationException {
         if (itemDto.getName() != null && itemDto.getName().isEmpty()) {
             throw new ValidationException("У вещи должно быть название и описанине.");
         }
