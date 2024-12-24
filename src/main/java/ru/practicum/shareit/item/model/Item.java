@@ -1,7 +1,6 @@
 package ru.practicum.shareit.item.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.*;
 import ru.practicum.shareit.request.model.ItemRequest;
 
 /**
@@ -9,7 +8,9 @@ import ru.practicum.shareit.request.model.ItemRequest;
  */
 
 @AllArgsConstructor
-@Data
+@Getter
+@Setter
+@EqualsAndHashCode(of = {"id"})
 public class Item {
     Long id;
     String name;
