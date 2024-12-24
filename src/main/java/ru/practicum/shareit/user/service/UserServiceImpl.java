@@ -11,7 +11,6 @@ import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserStorage;
 
 import java.util.Collection;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,12 +27,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto getUserById(Long id) throws NotFoundException {
-        Optional<User> user = userStorage.getUserById(id);
-        if (user.isPresent()) {
-            return UserMapper.toUserDto(user.get());
-        } else {
-            throw new NotFoundException("Пользователь не найден по id " + id);
-        }
+        User user = userStorage.getUserById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден по id " + id));
+
+        return UserMapper.toUserDto(user);
     }
 
     @Override
@@ -45,13 +42,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto update(Long id, User user) throws ConflictException, ValidationException, NotFoundException {
-        Optional<User> oldUser = userStorage.getUserById(id);
-        if (oldUser.isPresent()) {
-            user = updateUser(oldUser.get(), user);
-            return UserMapper.toUserDto(userStorage.update(user));
-        } else {
-            throw new NotFoundException("Пользователь не найден по id " + id);
-        }
+        User oldUser = userStorage.getUserById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден по id " + id));
+
+        user = updateUser(oldUser, user);
+        return UserMapper.toUserDto(userStorage.update(user));
     }
 
     private User updateUser(User oldUser, User newUser) throws ConflictException, ValidationException {

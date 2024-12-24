@@ -12,7 +12,6 @@ import ru.practicum.shareit.user.service.UserService;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -35,24 +34,19 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto update(Long itemId, Long userId, ItemDto itemDto) throws NotFoundException, ValidationException {
         validateUserId(userId);
         validateItemDtoForUpdate(itemDto);
-        Optional<Item> oldItem = itemStorage.getItemByOwner(itemId, userId);
+        Item oldItem = itemStorage.getItemByOwner(itemId, userId)
+                .orElseThrow(() -> new NotFoundException("У пользователя c id " + userId + " нет вещи с id " + itemId));
 
-        if (oldItem.isEmpty()) {
-            throw new NotFoundException("У пользователя c id " + userId + " нет вещи с id " + itemId);
-        }
-
-        Item item = updateItem(oldItem.get(), ItemMapper.toItem(itemDto, userId));
+        Item item = updateItem(oldItem, ItemMapper.toItem(itemDto, userId));
         return ItemMapper.toItemDto(itemStorage.update(item));
     }
 
     @Override
     public ItemDto getItem(Long itemId) throws NotFoundException {
-        Optional<Item> item = itemStorage.getById(itemId);
-        if (item.isPresent()) {
-            return ItemMapper.toItemDto(item.get());
-        } else {
-            throw new NotFoundException("Вещь не найдена по id");
-        }
+        Item item = itemStorage.getById(itemId)
+                .orElseThrow(() -> new NotFoundException("Вещь не найдена по id"));
+
+        return ItemMapper.toItemDto(item);
     }
 
     @Override
