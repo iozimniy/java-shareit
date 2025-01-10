@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS bookings (
     start_date TIMESTAMP NOT NULL,
     end_date TIMESTAMP NOT NULL,
     item_id BIGINT NOT NULL REFERENCES items (item_id),
-    booker BIGINT NOT NULL REFERENCES users (user_id),
+    booker_id BIGINT NOT NULL REFERENCES users (user_id),
     status VARCHAR(20) NOT NULL,
     CONSTRAINT pk_bookings PRIMARY KEY (booking_id)
 );

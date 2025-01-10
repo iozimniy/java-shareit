@@ -1,6 +1,7 @@
 package ru.practicum.shareit.user.controllers;
 
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,14 +21,11 @@ import java.util.Collection;
  */
 @RestController
 @RequestMapping(path = "/users")
+@AllArgsConstructor
 @Slf4j
 public class UserController {
 
     UserService userService;
-
-    public UserController(UserServiceImpl userServiceImpl) {
-        this.userService = userServiceImpl;
-    }
 
     @PostMapping
     public UserDto create(@Valid @RequestBody User user) throws ValidationException, ConflictException {

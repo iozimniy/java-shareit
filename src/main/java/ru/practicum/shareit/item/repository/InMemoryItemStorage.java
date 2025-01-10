@@ -59,7 +59,7 @@ public class InMemoryItemStorage implements ItemStorage {
         return items.values().stream()
                 .filter(item -> (StringUtils.containsIgnoreCase(item.getName(), text)
                         || StringUtils.containsIgnoreCase(item.getDescription(), text))
-                        && item.getAvailable()
+                        && item.getIsAvailable()
                 )
                 .collect(Collectors.toList());
     }

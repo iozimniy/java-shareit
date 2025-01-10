@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import ru.practicum.shareit.request.model.ItemRequest;
+import ru.practicum.shareit.user.model.User;
 
 /**
  * TODO Sprint add-controllers.
@@ -26,8 +27,6 @@ public class Item {
     @Column(name = "is_available", nullable = false)
     Boolean isAvailable;
     @Column(name = "owner_id", nullable = false)
-    //@ManyToOne
-    //@JoinColumn(name = "user_id")
     Long ownerId;
     Long requestId;
 }
