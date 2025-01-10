@@ -2,12 +2,14 @@ package ru.practicum.shareit.user.service;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exceptions.ConflictException;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.user.dto.UserDto;
 import ru.practicum.shareit.user.dto.UserMapper;
 import ru.practicum.shareit.user.model.User;
+import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.repository.UserStorage;
 
 import java.util.Collection;
@@ -15,36 +17,39 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
-    UserStorage userStorage;
+    UserRepository userRepository;
 
     @Override
+    @Transactional
     public UserDto create(User newUser) throws ConflictException, ValidationException {
         validateEmail(newUser);
-        return UserMapper.toUserDto(userStorage.create(newUser));
+        return UserMapper.toUserDto(userRepository.save(newUser));
     }
 
     @Override
     public UserDto getUserById(Long id) throws NotFoundException {
-        return userStorage.getUserById(id)
+        return userRepository.findById(id)
                 .map(UserMapper::toUserDto)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден по id " + id));
     }
 
     @Override
     public Collection<UserDto> getAllUsers() {
-        return userStorage.getAllUsers().stream()
+        return userRepository.findAll().stream()
                 .map(UserMapper::toUserDto)
                 .collect(Collectors.toList());
     }
 
     @Override
+    @Transactional
     public UserDto update(Long id, User user) throws ConflictException, ValidationException, NotFoundException {
-        User oldUser = userStorage.getUserById(id)
+        User oldUser = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Пользователь не найден по id " + id));
         user = updateUser(oldUser, user);
-        return UserMapper.toUserDto(userStorage.update(user));
+        return UserMapper.toUserDto(userRepository.save(user));
     }
 
     private User updateUser(User oldUser, User newUser) throws ConflictException, ValidationException {
@@ -64,14 +69,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void delete(Long id) throws NotFoundException {
         validateId(id);
-        userStorage.delete(id);
+        userRepository.deleteById(id);
     }
 
     @Override
     public void validateId(Long id) throws NotFoundException {
-        if (!userStorage.contains(id)) {
+        if (!userRepository.existsById(id)) {
             throw new NotFoundException("Пользователь не найден по id " + id);
         }
     }
@@ -81,12 +87,8 @@ public class UserServiceImpl implements UserService {
             throw new ValidationException("Не предоставлен email для создания пользователя");
         }
 
-        Collection<String> emails = userStorage.getAllUsers().stream()
-                .map(user -> user.getEmail())
-                .toList();
-
-        if (emails.contains(newUser.getEmail())) {
-            throw new ConflictException("Не предоставлен email для создания пользователя");
+        if (userRepository.existsByEmail(newUser.getEmail())) {
+            throw new ConflictException("Этот email уже занят");
         }
     }
 }

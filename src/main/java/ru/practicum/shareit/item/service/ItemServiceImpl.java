@@ -2,13 +2,14 @@ package ru.practicum.shareit.item.service;
 
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
-import ru.practicum.shareit.item.repository.ItemStorage;
+import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.util.Collection;
@@ -17,34 +18,37 @@ import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@Transactional(readOnly = true)
 public class ItemServiceImpl implements ItemService {
 
     UserService userService;
-    ItemStorage itemStorage;
+    ItemRepository itemRepository;
 
     @Override
+    @Transactional
     public ItemDto create(Long userId, ItemDto itemDto) throws NotFoundException, ValidationException {
         validateUserId(userId);
         validateItemDtoForCreate(itemDto);
         Item item = ItemMapper.toItem(itemDto, userId);
-        item = itemStorage.create(item);
+        item = itemRepository.save(item);
         return ItemMapper.toItemDto(item);
     }
 
     @Override
+    @Transactional
     public ItemDto update(Long itemId, Long userId, ItemDto itemDto) throws NotFoundException, ValidationException {
         validateUserId(userId);
         validateItemDtoForUpdate(itemDto);
-        Item oldItem = itemStorage.getItemByOwner(itemId, userId)
+        Item oldItem = itemRepository.findByIdAndOwnerId(itemId, userId)
                 .orElseThrow(() -> new NotFoundException("У пользователя c id " + userId + " нет вещи с id " + itemId));
 
         Item item = updateItem(oldItem, ItemMapper.toItem(itemDto, userId));
-        return ItemMapper.toItemDto(itemStorage.update(item));
+        return ItemMapper.toItemDto(itemRepository.save(item));
     }
 
     @Override
     public ItemDto getItem(Long itemId) throws NotFoundException {
-        return itemStorage.getById(itemId)
+        return itemRepository.findById(itemId)
                 .map(ItemMapper::toItemDto)
                 .orElseThrow(() -> new NotFoundException("Вещь не найдена по id"));
     }
@@ -52,7 +56,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Collection<ItemDto> getUserItems(Long userId) throws NotFoundException {
         validateUserId(userId);
-        return itemStorage.getUserItems(userId).stream()
+        return itemRepository.findAllByOwnerId(userId).stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
@@ -62,14 +66,14 @@ public class ItemServiceImpl implements ItemService {
         if (!StringUtils.hasText(text)) {
             return Collections.EMPTY_LIST;
         }
-        return itemStorage.getByText(text).stream()
+        return itemRepository.findAllByNameOrDescriptionLike(text).stream()
                 .map(ItemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
     private Item updateItem(Item oldItem, Item newItem) {
         newItem.setId(oldItem.getId());
-        newItem.setRequest(oldItem.getRequest());
+        newItem.setRequestId(oldItem.getRequestId());
 
         if (newItem.getName() == null) {
             newItem.setName(oldItem.getName());
@@ -79,8 +83,8 @@ public class ItemServiceImpl implements ItemService {
             newItem.setDescription(oldItem.getDescription());
         }
 
-        if (newItem.getAvailable() == null) {
-            newItem.setAvailable(oldItem.getAvailable());
+        if (newItem.getIsAvailable() == null) {
+            newItem.setIsAvailable(oldItem.getIsAvailable());
         }
 
         return newItem;
