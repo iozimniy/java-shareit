@@ -11,9 +11,10 @@ CREATE TABLE IF NOT EXISTS items (
     name VARCHAR(255) NOT NULL,
     description VARCHAR(512) NOT NULL,
     is_available BOOLEAN NOT NULL,
-    owner_id BIGINT NOT NULL REFERENCES users (user_id),
+    owner_id BIGINT NOT NULL,
     request_id BIGINT,
-    CONSTRAINT pk_items PRIMARY KEY (item_id)
+    CONSTRAINT pk_items PRIMARY KEY (item_id),
+    CONSTRAINT fk_item_to_user FOREIGN KEY (owner_id) REFERENCES users (user_id)
 );
 
 CREATE TABLE IF NOT EXISTS bookings (

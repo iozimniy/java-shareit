@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -10,6 +11,7 @@ import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.service.UserService;
 
 import java.util.Collection;
@@ -19,19 +21,22 @@ import java.util.stream.Collectors;
 @Service
 @AllArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class ItemServiceImpl implements ItemService {
 
     UserService userService;
     ItemRepository itemRepository;
+    ItemMapper itemMapper;
+    UserRepository userRepository;
 
     @Override
     @Transactional
     public ItemDto create(Long userId, ItemDto itemDto) throws NotFoundException, ValidationException {
         validateUserId(userId);
         validateItemDtoForCreate(itemDto);
-        Item item = ItemMapper.toItem(itemDto, userId);
+        Item item = itemMapper.toItem(itemDto, userRepository.findById(userId).get());
         item = itemRepository.save(item);
-        return ItemMapper.toItemDto(item);
+        return itemMapper.toItemDto(item);
     }
 
     @Override
@@ -42,14 +47,14 @@ public class ItemServiceImpl implements ItemService {
         Item oldItem = itemRepository.findByIdAndOwnerId(itemId, userId)
                 .orElseThrow(() -> new NotFoundException("У пользователя c id " + userId + " нет вещи с id " + itemId));
 
-        Item item = updateItem(oldItem, ItemMapper.toItem(itemDto, userId));
-        return ItemMapper.toItemDto(itemRepository.save(item));
+        Item item = updateItem(oldItem, itemMapper.toItem(itemDto, userRepository.findById(userId).get()));
+        return itemMapper.toItemDto(itemRepository.save(item));
     }
 
     @Override
     public ItemDto getItem(Long itemId) throws NotFoundException {
         return itemRepository.findById(itemId)
-                .map(ItemMapper::toItemDto)
+                .map(itemMapper::toItemDto)
                 .orElseThrow(() -> new NotFoundException("Вещь не найдена по id"));
     }
 
@@ -57,7 +62,7 @@ public class ItemServiceImpl implements ItemService {
     public Collection<ItemDto> getUserItems(Long userId) throws NotFoundException {
         validateUserId(userId);
         return itemRepository.findAllByOwnerId(userId).stream()
-                .map(ItemMapper::toItemDto)
+                .map(itemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
@@ -67,7 +72,7 @@ public class ItemServiceImpl implements ItemService {
             return Collections.EMPTY_LIST;
         }
         return itemRepository.findAllByNameOrDescriptionLike(text).stream()
-                .map(ItemMapper::toItemDto)
+                .map(itemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
 
