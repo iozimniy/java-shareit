@@ -4,6 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
+import ru.practicum.shareit.user.model.User;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,9 +20,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
                                                                                 LocalDateTime time,
                                                                                 Status status);
 
-    @Query("select b from Booking as b join Item it where it.ownerId = ?1")
-    List<Booking> findAllByOwner(Long ownerId);
-
-    @Query("select b from Booking as b join Item it where it.ownerId = ?1 and b.endDate > ?2")
-    List<Booking> findAllByOwnerIdAndEndDateIsAfterOrderByEndDateDesc(Long ownerId, LocalDateTime time);
+    //@Query("select b from Booking as b join Item it where it.owner = ?1")
+    List<Booking> findAllByItemOwnerIdOrderByStartDateDesc(Long ownerId);
 }

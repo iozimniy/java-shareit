@@ -29,7 +29,7 @@ public class InMemoryItemStorage implements ItemStorage {
     @Override
     public Optional<Item> getItemByOwner(Long itemId, Long userId) {
         return items.values().stream()
-                .filter(item -> item.getId().equals(itemId) && item.getOwnerId().equals(userId))
+                .filter(item -> item.getId().equals(itemId) && item.getOwner().equals(userId))
                 .findAny();
     }
 
@@ -50,7 +50,7 @@ public class InMemoryItemStorage implements ItemStorage {
     @Override
     public Collection<Item> getUserItems(Long userId) {
         return items.values().stream()
-                .filter(item -> item.getOwnerId().equals(userId))
+                .filter(item -> item.getOwner().equals(userId))
                 .collect(Collectors.toList());
     }
 

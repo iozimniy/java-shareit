@@ -1,9 +1,9 @@
 package ru.practicum.shareit.booking.controllers;
 
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
-import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Filter;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exceptions.NotFoundException;
@@ -25,9 +25,10 @@ public class BookingController {
         this.bookingService = bookingService;
     }
     @PostMapping
-    public BookingDto create(@RequestBody Booking booking) throws ValidationException {
-      log.debug("Получен запрос на создание бронирования: {}", booking);
-      return bookingService.create(booking);
+    public BookingDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
+            @Valid @RequestBody BookingDto bookingDto) throws ValidationException, NotFoundException {
+      log.debug("Получен запрос на создание бронирования: {}", bookingDto);
+      return bookingService.create(bookingDto, userId);
     }
 
     @PatchMapping("/{bookingId}")
@@ -54,6 +55,7 @@ public class BookingController {
     @GetMapping("/owner")
     public Collection<BookingDto> getOwnerBookings(@RequestHeader("X-Sharer-User-Id") Long userId,
                                                    @RequestParam(required = false) Optional<Filter> filter) throws NotFoundException {
+        log.debug("Получен запрос на просмотр всех бронирований владельца с id {} с фильтром {}", userId, filter);
         return bookingService.getAllOwnerBookings(userId, filter);
     }
 }

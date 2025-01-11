@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDto;
@@ -13,6 +14,7 @@ import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.repository.UserRepository;
+import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service
+@Slf4j
 public class BookingServiceImpl implements BookingService{
 
     BookingRepository bookingRepository;
@@ -28,10 +31,13 @@ public class BookingServiceImpl implements BookingService{
     BookingMapper bookingMapper;
     ItemRepository itemRepository;
     UserRepository userRepository;
+    UserService userService;
     @Override
-    public BookingDto create(Booking booking) throws ValidationException {
-        validateBooking(booking);
-        booking.setStatus(Status.WAITING);
+    public BookingDto create(BookingDto bookingDto, Long userId) throws ValidationException, NotFoundException {
+        log.debug("Дата начала брони {}", bookingDto.getStartDate());
+        userService.validateId(userId);
+        validateBooking(bookingDto);
+        Booking booking = bookingMapper.toBooking(bookingDto, userRepository.findById(userId).get(), Status.WAITING);
         return bookingMapper.toDTO(bookingRepository.save(booking));
     }
 
@@ -110,12 +116,15 @@ public class BookingServiceImpl implements BookingService{
 
     @Override
     public Collection<BookingDto> getAllOwnerBookings(Long userId, Optional<Filter> filter) throws NotFoundException {
+        var owner = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + "не найден"));
+
         if (!itemRepository.existsByOwnerId(userId)) {
             throw new NotFoundException("У пользователя с id " + userId + "нет вещей");
         }
 
         if (filter.isEmpty()) {
-            return bookingRepository.findAllByOwner(userId).stream()
+            return bookingRepository.findAllByItemOwnerIdOrderByStartDateDesc(userId).stream()
                     .map(booking -> bookingMapper.toDTO(booking))
                     .collect(Collectors.toList());
         }
@@ -126,9 +135,9 @@ public class BookingServiceImpl implements BookingService{
 
     //вспомогательные методы
 
-    private void validateBooking(Booking booking) throws ValidationException {
-        if ((booking.getStartDate().isAfter(booking.getEndDate())) ||
-        booking.getStartDate() == booking.getEndDate()) {
+    private void validateBooking(BookingDto bookingDto) throws ValidationException {
+        if ((bookingDto.getStartDate().isAfter(bookingDto.getEndDate())) ||
+        bookingDto.getStartDate() == bookingDto.getEndDate()) {
             throw new ValidationException("Некорретный период бронирования");
         }
     }

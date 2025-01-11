@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.Optional;
 
 public interface BookingService {
-    BookingDto create(Booking booking) throws ValidationException;
+    BookingDto create(BookingDto bookingDto, Long userId) throws ValidationException, NotFoundException;
 
     BookingDto updateStatus(Long userId, Long bookingId, Boolean approved) throws NotFoundException;
 
