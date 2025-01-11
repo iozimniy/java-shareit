@@ -19,10 +19,10 @@ public class BookingDto {
     Long id;
     @NotNull
     @DateTimeFormat(pattern = "YYYY-MM-DD'T'HH:mm:ss")
-    LocalDateTime startDate;
+    LocalDateTime start;
     @NotNull
     @DateTimeFormat(pattern = "YYYY-MM-DD'T'HH:mm:ss")
-    LocalDateTime endDate;
+    LocalDateTime end;
     Item item;
     User booker;
     Status status;

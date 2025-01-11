@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -93,6 +94,17 @@ public class ItemServiceImpl implements ItemService {
         }
 
         return newItem;
+    }
+
+    public Item getItemForBooking(Long itemId) throws NotFoundException, ValidationException {
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Не найдена вещь с id " + itemId));
+
+        if (!item.getIsAvailable()) {
+            throw new ValidationException("Вещь не доступна для бронирования");
+        }
+
+        return item;
     }
 
     private void validateUserId(Long userId) throws NotFoundException {

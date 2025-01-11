@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.model.Filter;
 import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exceptions.NotFoundException;
@@ -26,7 +27,7 @@ public class BookingController {
     }
     @PostMapping
     public BookingDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
-            @Valid @RequestBody BookingDto bookingDto) throws ValidationException, NotFoundException {
+            @Valid @RequestBody BookingRequestDto bookingDto) throws ValidationException, NotFoundException {
       log.debug("Получен запрос на создание бронирования: {}", bookingDto);
       return bookingService.create(bookingDto, userId);
     }
@@ -41,7 +42,7 @@ public class BookingController {
     }
 
     @GetMapping("/{bookingId}")
-    public BookingDto getBooking(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable Long bookingId) throws NotFoundException {
+    public BookingDto getBooking(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable Long bookingId) throws NotFoundException, ValidationException {
         log.debug("Получен запрос на просмотр бронирования с id {} от пользователя с id {}", bookingId, userId);
         return bookingService.getBooking(userId, bookingId);
     }

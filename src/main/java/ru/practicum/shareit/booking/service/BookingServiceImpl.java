@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingMapper;
+import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Filter;
 import ru.practicum.shareit.booking.model.Status;
@@ -13,6 +14,7 @@ import ru.practicum.shareit.booking.repository.BookingRepository;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.service.UserService;
 
@@ -30,14 +32,18 @@ public class BookingServiceImpl implements BookingService{
     @Autowired(required = false)
     BookingMapper bookingMapper;
     ItemRepository itemRepository;
+    ItemService itemService;
     UserRepository userRepository;
     UserService userService;
     @Override
-    public BookingDto create(BookingDto bookingDto, Long userId) throws ValidationException, NotFoundException {
-        log.debug("Дата начала брони {}", bookingDto.getStartDate());
-        userService.validateId(userId);
+    public BookingDto create(BookingRequestDto bookingDto, Long userId) throws ValidationException, NotFoundException {
+        var booker = userService.getUserForBooking(userId);
+        var item = itemService.getItemForBooking(bookingDto.getItemId());
         validateBooking(bookingDto);
-        Booking booking = bookingMapper.toBooking(bookingDto, userRepository.findById(userId).get(), Status.WAITING);
+        Booking booking = bookingMapper.fromRequestToBooking(bookingDto,
+                booker,
+                item);
+        booking.setStatus(Status.WAITING);
         return bookingMapper.toDTO(bookingRepository.save(booking));
     }
 
@@ -55,13 +61,13 @@ public class BookingServiceImpl implements BookingService{
     }
 
     @Override
-    public BookingDto getBooking(Long userId, Long bookingId) throws NotFoundException {
+    public BookingDto getBooking(Long userId, Long bookingId) throws NotFoundException, ValidationException {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Бронирование не найдено по id " + bookingId));
 
         if (!(booking.getBooker().getId() == userId)
-                || !itemRepository.existsByIdAndOwnerId(booking.getItem().getId(), userId)) {
-            throw new NotFoundException("Пользователь c id " + userId + "не имеет прав для просмотра бронирования");
+                && !(itemRepository.existsByIdAndOwnerId(booking.getItem().getId(), userId))) {
+            throw new ValidationException("Пользователь c id " + userId + " не имеет прав для просмотра бронирования");
         }
 
         return bookingMapper.toDTO(booking);
@@ -135,9 +141,9 @@ public class BookingServiceImpl implements BookingService{
 
     //вспомогательные методы
 
-    private void validateBooking(BookingDto bookingDto) throws ValidationException {
-        if ((bookingDto.getStartDate().isAfter(bookingDto.getEndDate())) ||
-        bookingDto.getStartDate() == bookingDto.getEndDate()) {
+    private void validateBooking(BookingRequestDto bookingDto) throws ValidationException {
+        if ((bookingDto.getStart().isAfter(bookingDto.getEnd())) ||
+        bookingDto.getStart() == bookingDto.getEnd()) {
             throw new ValidationException("Некорретный период бронирования");
         }
     }

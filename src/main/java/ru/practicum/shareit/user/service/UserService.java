@@ -21,4 +21,5 @@ public interface UserService {
     void delete(Long id) throws NotFoundException;
 
     void validateId(Long id) throws NotFoundException;
+    User getUserForBooking(Long userId) throws NotFoundException;
 }

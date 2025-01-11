@@ -1,5 +1,6 @@
 package ru.practicum.shareit.user.service;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,6 +81,12 @@ public class UserServiceImpl implements UserService {
         if (!userRepository.existsById(id)) {
             throw new NotFoundException("Пользователь не найден по id " + id);
         }
+    }
+
+    @Override
+    public User getUserForBooking(Long userId) throws NotFoundException {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Пользователь не найден по id " + userId));
     }
 
     private void validateEmail(User newUser) throws ValidationException, ConflictException {
