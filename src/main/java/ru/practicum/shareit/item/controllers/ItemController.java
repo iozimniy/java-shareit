@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
+import ru.practicum.shareit.item.dto.ItemDTOWithBookings;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.service.ItemService;
 
@@ -47,7 +48,7 @@ public class ItemController {
 
     @GetMapping
     @SneakyThrows
-    public Collection<ItemDto> getUserItems(@RequestHeader("X-Sharer-User-Id") Long userId) {
+    public Collection<ItemDTOWithBookings> getUserItems(@RequestHeader("X-Sharer-User-Id") Long userId) {
         log.debug("Получен запрос на просмотр всех вещей пользователя с id {}", userId);
         return itemService.getUserItems(userId);
     }

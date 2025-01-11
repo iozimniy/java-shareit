@@ -6,8 +6,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import ru.practicum.shareit.booking.model.Booking;
+import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
+import ru.practicum.shareit.item.dto.ItemDTOWithBookings;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemMapper;
 import ru.practicum.shareit.item.model.Item;
@@ -15,8 +19,11 @@ import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.service.UserService;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +36,7 @@ public class ItemServiceImpl implements ItemService {
     ItemRepository itemRepository;
     ItemMapper itemMapper;
     UserRepository userRepository;
+    BookingRepository bookingRepository;
 
     @Override
     @Transactional
@@ -60,11 +68,20 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public Collection<ItemDto> getUserItems(Long userId) throws NotFoundException {
+    public Collection<ItemDTOWithBookings> getUserItems(Long userId) throws NotFoundException {
         validateUserId(userId);
-        return itemRepository.findAllByOwnerId(userId).stream()
-                .map(itemMapper::toItemDto)
+        List<Item> ownersItem = itemRepository.findAllByOwnerId(userId);
+        return ownersItem.stream()
+                .map(item -> mapToItemWithBooking(item))
                 .collect(Collectors.toList());
+    }
+
+    private ItemDTOWithBookings mapToItemWithBooking(Item item) {
+        List<Booking> itemBookings = bookingRepository.findAllByItemId(item.getId());
+
+        return itemMapper.toItemDTOWithBooking(item,
+                getLastBookingEndDate(itemBookings).orElse(LocalDateTime.now()),
+                getNextBookingStartDate(itemBookings).orElse(LocalDateTime.now()));
     }
 
     @Override
@@ -126,5 +143,17 @@ public class ItemServiceImpl implements ItemService {
         if (itemDto.getDescription() != null && itemDto.getDescription().isEmpty()) {
             throw new ValidationException("У вещи должно быть название и описанине.");
         }
+    }
+
+    private Optional<LocalDateTime> getLastBookingEndDate(List<Booking> bookings) {
+        return bookings.stream().map(booking -> booking.getEndDate())
+                .filter(date -> date.isBefore(LocalDateTime.now()))
+                .max(LocalDateTime::compareTo);
+    }
+
+    private Optional<LocalDateTime> getNextBookingStartDate(List<Booking> bookings) {
+        return bookings.stream().map(booking -> booking.getStartDate())
+                .filter(date -> date.isAfter(LocalDateTime.now()))
+                .min(LocalDateTime::compareTo);
     }
 }
