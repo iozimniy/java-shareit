@@ -48,7 +48,8 @@ public class BookingServiceImpl implements BookingService{
     }
 
     @Override
-    public BookingDto updateStatus(Long userId, Long bookingId, Boolean approved) throws NotFoundException {
+    public BookingDto updateStatus(Long userId, Long bookingId, Boolean approved) throws NotFoundException,
+            ValidationException {
         Booking booking = validateAndGetBooking(userId, bookingId);
 
         if (approved) {
@@ -65,12 +66,12 @@ public class BookingServiceImpl implements BookingService{
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Бронирование не найдено по id " + bookingId));
 
-        if (!(booking.getBooker().getId() == userId)
-                && !(itemRepository.existsByIdAndOwnerId(booking.getItem().getId(), userId))) {
+        if (booking.getBooker().getId().equals(userId)
+                || itemRepository.existsByIdAndOwnerId(booking.getItem().getId(), userId)) {
+            return bookingMapper.toDTO(booking);
+        } else {
             throw new ValidationException("Пользователь c id " + userId + " не имеет прав для просмотра бронирования");
         }
-
-        return bookingMapper.toDTO(booking);
     }
 
     @Override
@@ -122,8 +123,9 @@ public class BookingServiceImpl implements BookingService{
 
     @Override
     public Collection<BookingDto> getAllOwnerBookings(Long userId, Optional<Filter> filter) throws NotFoundException {
-        var owner = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("Пользователь с id " + userId + "не найден"));
+        if (!userRepository.existsById(userId)) {
+            throw new NotFoundException("Пользователь с id " + userId + "не найден");
+        }
 
         if (!itemRepository.existsByOwnerId(userId)) {
             throw new NotFoundException("У пользователя с id " + userId + "нет вещей");
@@ -133,6 +135,34 @@ public class BookingServiceImpl implements BookingService{
             return bookingRepository.findAllByItemOwnerIdOrderByStartDateDesc(userId).stream()
                     .map(booking -> bookingMapper.toDTO(booking))
                     .collect(Collectors.toList());
+        }
+
+        switch (filter.get()) {
+            case CURRENT -> {
+                return bookingRepository.findAllByItemOwnerIdAndEndDateIsAfterAndStatusOrderByEndDateDesc(userId,
+                        LocalDateTime.now(), Status.APPROVED).stream()
+                        .map(booking -> bookingMapper.toDTO(booking))
+                        .collect(Collectors.toList());
+            }
+            case PAST -> {
+                return bookingRepository.findAllByItemOwnerIdAndEndDateIsBeforeOrderByEndDateDesc(userId,
+                        LocalDateTime.now()).stream()
+                        .map(booking -> bookingMapper.toDTO(booking))
+                        .collect(Collectors.toList());
+            }
+            case FUTURE -> {
+                return bookingRepository.findAllByItemOwnerIdAndStartDateIsAfterAndStatusOrderByEndDateDesc(
+                        userId, LocalDateTime.now(), Status.APPROVED
+                ).stream().map(booking -> bookingMapper.toDTO(booking)).collect(Collectors.toList());
+            }
+            case WAITING -> {
+                return bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDateDesc(userId, Status.WAITING)
+                        .stream().map(booking -> bookingMapper.toDTO(booking)).collect(Collectors.toList());
+            }
+            case REJECTED -> {
+                return bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDateDesc(userId, Status.REJECTED)
+                        .stream().map(booking -> bookingMapper.toDTO(booking)).collect(Collectors.toList());
+            }
         }
 
         return null;
@@ -147,13 +177,13 @@ public class BookingServiceImpl implements BookingService{
             throw new ValidationException("Некорретный период бронирования");
         }
     }
-    private Booking validateAndGetBooking(Long userId, Long bookingId) throws NotFoundException {
+    private Booking validateAndGetBooking(Long userId, Long bookingId) throws NotFoundException, ValidationException {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Бронирование не найдено по id " + bookingId));
         if (itemRepository.existsByIdAndOwnerId(booking.getItem().getId(), userId)) {
             return booking;
         } else {
-            throw new NotFoundException("У пользователя c id " + userId + " нет вещи с id " + booking.getItem().getId());
+            throw new ValidationException("У пользователя c id " + userId + " нет вещи с id " + booking.getItem().getId());
         }
     }
 }

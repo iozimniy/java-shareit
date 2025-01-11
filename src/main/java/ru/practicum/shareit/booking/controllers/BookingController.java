@@ -35,7 +35,7 @@ public class BookingController {
     @PatchMapping("/{bookingId}")
     public BookingDto updateStatus(@RequestHeader("X-Sharer-User-Id") Long userId,
                                    @PathVariable Long bookingId,
-                                   @RequestParam Boolean approved) throws NotFoundException {
+                                   @RequestParam Boolean approved) throws NotFoundException, ValidationException {
         log.debug("Получен запрос на изменение бронирования от пользователя с id {} для вещи с id {} и статусом {}",
                 userId, bookingId, approved);
         return bookingService.updateStatus(userId, bookingId, approved);
