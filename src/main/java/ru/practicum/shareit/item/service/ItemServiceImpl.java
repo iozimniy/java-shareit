@@ -1,6 +1,7 @@
 package ru.practicum.shareit.item.service;
 
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,20 +25,20 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Slf4j
 public class ItemServiceImpl implements ItemService {
 
-    private static final Comparator<Booking> comparatorBookingEndDate = ItemServiceImpl::compareBookingEndDate;
-    private static final Comparator<Booking> comparatorBookingStartDate = ItemServiceImpl::compareBookingStartDate;
-    UserService userService;
-    ItemRepository itemRepository;
-    ItemMapper itemMapper;
-    UserRepository userRepository;
-    BookingRepository bookingRepository;
-    CommentRepository commentRepository;
-    CommentMapper commentMapper;
+    private static Comparator<Booking> comparatorBookingEndDate = ItemServiceImpl::compareBookingEndDate;
+    private static Comparator<Booking> comparatorBookingStartDate = ItemServiceImpl::compareBookingStartDate;
+    private final UserService userService;
+    private final ItemRepository itemRepository;
+    private final ItemMapper itemMapper;
+    private final UserRepository userRepository;
+    private final BookingRepository bookingRepository;
+    private final CommentRepository commentRepository;
+    private final CommentMapper commentMapper;
 
     private static int compareBookingEndDate(Booking o1, Booking o2) {
         if (o1.getEndDate().isAfter(o2.getEndDate())) {
