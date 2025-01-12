@@ -1,6 +1,5 @@
 package ru.practicum.shareit.booking.service;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +12,7 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Filter;
 import ru.practicum.shareit.booking.model.Status;
 import ru.practicum.shareit.booking.repository.BookingRepository;
+import ru.practicum.shareit.booking.filter.*;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
 import ru.practicum.shareit.item.repository.ItemRepository;
@@ -22,6 +22,8 @@ import ru.practicum.shareit.user.service.UserService;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -98,38 +100,14 @@ public class BookingServiceImpl implements BookingService {
                     .collect(Collectors.toList());
         }
 
-        switch (filter.get()) {
-            case CURRENT -> {
-                return bookingRepository
-                        .findAllFinishedBookingsById(userId,
-                                LocalDateTime.now(), Status.APPROVED)
-                        .stream().map(booking -> bookingMapper.toDTO(booking))
-                        .collect(Collectors.toList());
-            }
-            case PAST -> {
-                return bookingRepository.findAllByBookerIdAndEndDateIsBefore(userId, LocalDateTime.now())
-                        .stream().map(booking -> bookingMapper.toDTO(booking))
-                        .collect(Collectors.toList());
-            }
-            case FUTURE -> {
-                return bookingRepository.findAllFutureBookingsById(userId,
-                                LocalDateTime.now(), Status.APPROVED).stream()
-                        .map(booking -> bookingMapper.toDTO(booking))
-                        .collect(Collectors.toList());
-            }
-            case WAITING -> {
-                return bookingRepository.findAllByBookerIdAndStatus(userId, Status.WAITING)
-                        .stream().map(booking -> bookingMapper.toDTO(booking))
-                        .collect(Collectors.toList());
-            }
-            case REJECTED -> {
-                return bookingRepository.findAllByBookerIdAndStatus(userId, Status.REJECTED)
-                        .stream().map(booking -> bookingMapper.toDTO(booking))
-                        .collect(Collectors.toList());
-            }
-        }
+        Map<Filter, BookingStateFetchStrategy> filterStrategy = new HashMap<>();
+        filterStrategy.put(Filter.CURRENT, new CurrentStateStrategy(bookingRepository, bookingMapper));
+        filterStrategy.put(Filter.PAST, new PastStateStrategy(bookingRepository, bookingMapper));
+        filterStrategy.put(Filter.FUTURE, new FutureStateStrategy(bookingRepository, bookingMapper));
+        filterStrategy.put(Filter.WAITING, new WaitingStateStrategy(bookingRepository, bookingMapper));
+        filterStrategy.put(Filter.REJECTED, new RejectedStateStrategy(bookingRepository, bookingMapper));
 
-        return null;
+        return filterStrategy.get(filter).getBookings(userId);
     }
 
     @Override
