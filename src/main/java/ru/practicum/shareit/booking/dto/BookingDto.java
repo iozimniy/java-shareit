@@ -18,10 +18,8 @@ import java.time.LocalDateTime;
 public class BookingDto {
     private Long id;
     @NotNull
-    @DateTimeFormat(pattern = "YYYY-MM-DD'T'HH:mm:ss")
     private LocalDateTime start;
     @NotNull
-    @DateTimeFormat(pattern = "YYYY-MM-DD'T'HH:mm:ss")
     private LocalDateTime end;
     private Item item;
     private User booker;
