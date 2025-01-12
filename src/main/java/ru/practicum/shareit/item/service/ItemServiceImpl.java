@@ -1,6 +1,5 @@
 package ru.practicum.shareit.item.service;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -123,7 +122,7 @@ public class ItemServiceImpl implements ItemService {
         if (!StringUtils.hasText(text)) {
             return Collections.EMPTY_LIST;
         }
-        return itemRepository.findAllByNameOrDescriptionLike(text).stream()
+        return itemRepository.findAllByText(text).stream()
                 .map(itemMapper::toItemDto)
                 .collect(Collectors.toList());
     }
@@ -145,7 +144,7 @@ public class ItemServiceImpl implements ItemService {
 
     private void validateComment(User author, Item item) throws ValidationException {
         Booking booking = bookingRepository.findByBookerIdAndItemId(author.getId(), item.getId())
-                .orElseThrow(() -> new jakarta.validation.ValidationException("Автор с id " + author.getId() + " не брар в аренду" +
+                .orElseThrow(() -> new ValidationException("Автор с id " + author.getId() + " не брар в аренду" +
                         "вещь с id " + item.getId()));
         if (booking.getEndDate().isAfter(LocalDateTime.now())) {
             throw new ValidationException("Срок аренды ещё не закончен");

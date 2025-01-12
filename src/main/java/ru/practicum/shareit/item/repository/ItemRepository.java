@@ -18,5 +18,5 @@ public interface ItemRepository extends JpaRepository<Item, Long> {
 
     @Query("select it from Item as it where (UPPER(it.name) like %?1% or UPPER(it.description) like %?1%) " +
             "and it.isAvailable = true")
-    List<Item> findAllByNameOrDescriptionLike(String text);
+    List<Item> findAllByText(String text);
 }
