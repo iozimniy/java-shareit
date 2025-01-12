@@ -100,29 +100,29 @@ public class BookingServiceImpl implements BookingService {
         switch (filter.get()) {
             case CURRENT -> {
                 return bookingRepository
-                        .findAllByBookerIdAndEndDateIsAfterAndStatusOrderByEndDateDesc(userId,
+                        .findAllFinishedBookingsById(userId,
                                 LocalDateTime.now(), Status.APPROVED)
                         .stream().map(booking -> bookingMapper.toDTO(booking))
                         .collect(Collectors.toList());
             }
             case PAST -> {
-                return bookingRepository.findAllByBookerIdAndEndDateIsBeforeOrderByEndDateDesc(userId, LocalDateTime.now())
+                return bookingRepository.findAllByBookerIdAndEndDateIsBefore(userId, LocalDateTime.now())
                         .stream().map(booking -> bookingMapper.toDTO(booking))
                         .collect(Collectors.toList());
             }
             case FUTURE -> {
-                return bookingRepository.findAllByBookerIdAndStartDateIsAfterAndStatusOrderByEndDateDesc(userId,
+                return bookingRepository.findAllFutureBookingsById(userId,
                                 LocalDateTime.now(), Status.APPROVED).stream()
                         .map(booking -> bookingMapper.toDTO(booking))
                         .collect(Collectors.toList());
             }
             case WAITING -> {
-                return bookingRepository.findAllByBookerIdAndStatusOrderByStartDateDesc(userId, Status.WAITING)
+                return bookingRepository.findAllByBookerIdAndStatus(userId, Status.WAITING)
                         .stream().map(booking -> bookingMapper.toDTO(booking))
                         .collect(Collectors.toList());
             }
             case REJECTED -> {
-                return bookingRepository.findAllByBookerIdAndStatusOrderByStartDateDesc(userId, Status.REJECTED)
+                return bookingRepository.findAllByBookerIdAndStatus(userId, Status.REJECTED)
                         .stream().map(booking -> bookingMapper.toDTO(booking))
                         .collect(Collectors.toList());
             }
@@ -151,28 +151,28 @@ public class BookingServiceImpl implements BookingService {
 
         switch (filter.get()) {
             case CURRENT -> {
-                return bookingRepository.findAllByItemOwnerIdAndEndDateIsAfterAndStatusOrderByEndDateDesc(userId,
+                return bookingRepository.findAllCurrentBookingsByOwnerId(userId,
                                 LocalDateTime.now(), Status.APPROVED).stream()
                         .map(booking -> bookingMapper.toDTO(booking))
                         .collect(Collectors.toList());
             }
             case PAST -> {
-                return bookingRepository.findAllByItemOwnerIdAndEndDateIsBeforeOrderByEndDateDesc(userId,
+                return bookingRepository.findAllFinishedBookingByOwnerId(userId,
                                 LocalDateTime.now()).stream()
                         .map(booking -> bookingMapper.toDTO(booking))
                         .collect(Collectors.toList());
             }
             case FUTURE -> {
-                return bookingRepository.findAllByItemOwnerIdAndStartDateIsAfterAndStatusOrderByEndDateDesc(
+                return bookingRepository.findAllFutureBookingsByOwnerId(
                         userId, LocalDateTime.now(), Status.APPROVED
                 ).stream().map(booking -> bookingMapper.toDTO(booking)).collect(Collectors.toList());
             }
             case WAITING -> {
-                return bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDateDesc(userId, Status.WAITING)
+                return bookingRepository.findAllBookingByOwnerAndStatus(userId, Status.WAITING)
                         .stream().map(booking -> bookingMapper.toDTO(booking)).collect(Collectors.toList());
             }
             case REJECTED -> {
-                return bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDateDesc(userId, Status.REJECTED)
+                return bookingRepository.findAllBookingByOwnerAndStatus(userId, Status.REJECTED)
                         .stream().map(booking -> bookingMapper.toDTO(booking)).collect(Collectors.toList());
             }
         }

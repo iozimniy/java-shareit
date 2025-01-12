@@ -1,6 +1,7 @@
 package ru.practicum.shareit.booking.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.model.Status;
 
@@ -13,30 +14,43 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findAllByBookerId(Long bookerId);
 
-    List<Booking> findAllByBookerIdAndStatusOrderByStartDateDesc(Long bookerId, Status status);
+    @Query("select b from Booking as b where b.id = ?1 and b.status = ?2 order by b.startDate desc")
+    List<Booking> findAllByBookerIdAndStatus(Long bookerId, Status status);
 
-    List<Booking> findAllByBookerIdAndEndDateIsBeforeOrderByEndDateDesc(Long bookerId, LocalDateTime time);
+    @Query("select b from Booking as b where b.id = ?1 and b.endDate < ?2 order by b.endDate desc")
+    List<Booking> findAllByBookerIdAndEndDateIsBefore(Long bookerId, LocalDateTime time);
 
-    List<Booking> findAllByBookerIdAndEndDateIsAfterAndStatusOrderByEndDateDesc(Long bookerId,
-                                                                                LocalDateTime time,
-                                                                                Status status);
+    @Query("select b from Booking as b where b.id = ?1 and b.endDate > ?2 and b.status = ?3 order by b.endDate desc")
+    List<Booking> findAllFinishedBookingsById(Long bookerId,
+                                              LocalDateTime time,
+                                              Status status);
 
-    List<Booking> findAllByBookerIdAndStartDateIsAfterAndStatusOrderByEndDateDesc(Long bookerId,
-                                                                                  LocalDateTime time,
-                                                                                  Status status);
+    @Query("select b from Booking as b where b.id = ?1 and b.startDate > ?2 and b.status = ?3 " +
+            "order by b.startDate desc")
+    List<Booking> findAllFutureBookingsById(Long bookerId,
+                                            LocalDateTime time,
+                                            Status status);
 
     List<Booking> findAllByItemOwnerIdOrderByStartDateDesc(Long ownerId);
 
-    List<Booking> findAllByItemOwnerIdAndEndDateIsAfterAndStatusOrderByEndDateDesc(Long ownerId,
-                                                                                   LocalDateTime time,
-                                                                                   Status status);
+    @Query("select b from Booking as b join b.item as it join it.owner as ow where ow.id = ?1 and b.endDate > ?2 " +
+            "and b.status = ?3 order by b.endDate desc")
+    List<Booking> findAllCurrentBookingsByOwnerId(Long ownerId,
+                                                  LocalDateTime time,
+                                                  Status status);
 
-    List<Booking> findAllByItemOwnerIdAndEndDateIsBeforeOrderByEndDateDesc(Long ownerId, LocalDateTime time);
+    @Query("select b from Booking as b join b.item as it join it.owner as ow where ow.id = ?1 and b.endDate < ?2 " +
+            "order by b.endDate desc")
+    List<Booking> findAllFinishedBookingByOwnerId(Long ownerId, LocalDateTime time);
 
-    List<Booking> findAllByItemOwnerIdAndStartDateIsAfterAndStatusOrderByEndDateDesc(Long ownerId,
-                                                                                     LocalDateTime time, Status status);
+    @Query("select b from Booking as b join b.item as it join it.owner as ow where ow.id = ?1 and b.startDate > ?2 " +
+            "order by b.startDate desc")
+    List<Booking> findAllFutureBookingsByOwnerId(Long ownerId,
+                                                 LocalDateTime time, Status status);
 
-    List<Booking> findAllByItemOwnerIdAndStatusOrderByStartDateDesc(Long ownerId, Status status);
+    @Query("select b from Booking as b join b.item as it join it.owner as ow where ow.id = ?1 and b.status = ?2 " +
+            "order by b.endDate desc")
+    List<Booking> findAllBookingByOwnerAndStatus(Long ownerId, Status status);
 
     List<Booking> findAllByItemId(Long itemId);
 }
