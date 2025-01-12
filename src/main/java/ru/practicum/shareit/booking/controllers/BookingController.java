@@ -18,7 +18,6 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping(path = "/bookings")
-@Slf4j
 public class BookingController {
     BookingService bookingService;
 
@@ -29,7 +28,6 @@ public class BookingController {
     @PostMapping
     public BookingDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
                              @Valid @RequestBody BookingRequestDto bookingDto) throws ValidationException, NotFoundException {
-        log.debug("Получен запрос на создание бронирования: {}", bookingDto);
         return bookingService.create(bookingDto, userId);
     }
 
@@ -37,14 +35,11 @@ public class BookingController {
     public BookingDto updateStatus(@RequestHeader("X-Sharer-User-Id") Long userId,
                                    @PathVariable Long bookingId,
                                    @RequestParam Boolean approved) throws NotFoundException, ValidationException {
-        log.debug("Получен запрос на изменение бронирования от пользователя с id {} для вещи с id {} и статусом {}",
-                userId, bookingId, approved);
         return bookingService.updateStatus(userId, bookingId, approved);
     }
 
     @GetMapping("/{bookingId}")
     public BookingDto getBooking(@RequestHeader("X-Sharer-User-Id") Long userId, @PathVariable Long bookingId) throws NotFoundException, ValidationException {
-        log.debug("Получен запрос на просмотр бронирования с id {} от пользователя с id {}", bookingId, userId);
         return bookingService.getBooking(userId, bookingId);
     }
 
@@ -57,7 +52,6 @@ public class BookingController {
     @GetMapping("/owner")
     public Collection<BookingDto> getOwnerBookings(@RequestHeader("X-Sharer-User-Id") Long userId,
                                                    @RequestParam(required = false) Optional<Filter> filter) throws NotFoundException {
-        log.debug("Получен запрос на просмотр всех бронирований владельца с id {} с фильтром {}", userId, filter);
         return bookingService.getAllOwnerBookings(userId, filter);
     }
 }

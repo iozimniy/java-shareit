@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingMapper;
 import ru.practicum.shareit.booking.dto.BookingRequestDto;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Service
 @Slf4j
+@Transactional(readOnly = true)
 public class BookingServiceImpl implements BookingService {
 
     BookingRepository bookingRepository;
@@ -37,7 +39,9 @@ public class BookingServiceImpl implements BookingService {
     UserService userService;
 
     @Override
+    @Transactional
     public BookingDto create(BookingRequestDto bookingDto, Long userId) throws ValidationException, NotFoundException {
+        log.debug("Получен запрос от пользователя с id {} на создание бронирования {}", userId, bookingDto);
         var booker = userService.getUserForBooking(userId);
         var item = itemService.getItemForBooking(bookingDto.getItemId());
         validateBooking(bookingDto);
@@ -49,8 +53,11 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public BookingDto updateStatus(Long userId, Long bookingId, Boolean approved) throws NotFoundException,
             ValidationException {
+        log.debug("Получен запрос от пользователя с id {} на изменение cтатуса бронирования {} на {}", userId,
+                bookingId, approved);
         Booking booking = validateAndGetBooking(userId, bookingId);
 
         if (approved) {
@@ -64,6 +71,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public BookingDto getBooking(Long userId, Long bookingId) throws NotFoundException, ValidationException {
+        log.debug("Получен запрос от пользователя с id {} на просмотр бронирования с id {}", userId, bookingId);
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Бронирование не найдено по id " + bookingId));
 
@@ -77,6 +85,7 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public Collection<BookingDto> getAllBookings(Long userId, Optional<Filter> filter) throws NotFoundException {
+        log.debug("Получен запрос от пользователя с id {} на просмотр бронирований с фильтром {}", userId, filter);
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("Пользователь не найден по id " + userId);
         }
@@ -124,6 +133,8 @@ public class BookingServiceImpl implements BookingService {
 
     @Override
     public Collection<BookingDto> getAllOwnerBookings(Long userId, Optional<Filter> filter) throws NotFoundException {
+        log.debug("Получен запрос от пользователя с id {} на просмотр бронирований его вещей с фильтром {}", userId,
+                filter);
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("Пользователь с id " + userId + "не найден");
         }

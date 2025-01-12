@@ -62,6 +62,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public ItemDto create(Long userId, ItemDto itemDto) throws NotFoundException, ValidationException {
+        log.debug("Получен запрос от пользователя с id {} на создание вещи", userId, itemDto);
         validateUserId(userId);
         validateItemDtoForCreate(itemDto);
         Item item = itemMapper.toItem(itemDto, userRepository.findById(userId).get());
@@ -72,6 +73,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public ItemDto update(Long itemId, Long userId, ItemDto itemDto) throws NotFoundException, ValidationException {
+        log.debug("Получен запрос от пользователя с id {} на изменение вещи с id {} в виде {}", userId, itemId, itemDto);
         validateUserId(userId);
         validateItemDtoForUpdate(itemDto);
         Item oldItem = itemRepository.findByIdAndOwnerId(itemId, userId)
@@ -83,6 +85,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDTOWithBookings getItem(Long itemId) throws NotFoundException {
+        log.debug("Получен запрос на просмотр вещи с id {}", itemId);
         return itemRepository.findById(itemId)
                 .map(item -> mapToItemWithBooking(item, getComments(item.getId())))
                 .orElseThrow(() -> new NotFoundException("Вещь не найдена по id"));
@@ -96,6 +99,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Collection<ItemDTOWithBookings> getUserItems(Long userId) throws NotFoundException {
+        log.debug("Получен запрос на просмотр вещей пользователя с id {}", userId);
         validateUserId(userId);
         List<Item> ownersItem = itemRepository.findAllByOwnerId(userId);
         return ownersItem.stream()
@@ -114,6 +118,7 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public Collection<ItemDto> search(String text) {
+        log.debug("Получен запрос на поиск вещи по таксту {}", text);
         if (!StringUtils.hasText(text)) {
             return Collections.EMPTY_LIST;
         }
@@ -125,6 +130,8 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public CommentDto addComment(Long userId, Long itemId, CommentDto commentDto) throws NotFoundException, ValidationException {
+        log.debug("Получен запрос от пользователя с id {} на добавление комментария {} для вещи с id {}", userId,
+                itemId, commentDto);
         User author = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Автор не найден по id " + userId));
         Item item = itemRepository.findById(itemId)
