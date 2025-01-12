@@ -29,8 +29,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ItemServiceImpl implements ItemService {
 
-    private static Comparator<Booking> comparatorBookingEndDate = ItemServiceImpl::compareBookingEndDate;
-    private static Comparator<Booking> comparatorBookingStartDate = ItemServiceImpl::compareBookingStartDate;
+    private static final Comparator<Booking> comparatorBookingEndDate = ItemServiceImpl::compareBookingEndDate;
+    private static final Comparator<Booking> comparatorBookingStartDate = ItemServiceImpl::compareBookingStartDate;
     private final UserService userService;
     private final ItemRepository itemRepository;
     private final ItemMapper itemMapper;

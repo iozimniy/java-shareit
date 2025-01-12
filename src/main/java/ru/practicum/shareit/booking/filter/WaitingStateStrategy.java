@@ -14,6 +14,7 @@ public class WaitingStateStrategy implements BookingStateFetchStrategy {
 
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
+
     @Override
     public List<BookingDto> getBookings(Long userId) {
         return bookingRepository.findAllByBookerIdAndStatus(userId, Status.WAITING)

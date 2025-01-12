@@ -10,9 +10,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-public class PastStateStrategy implements BookingStateFetchStrategy{
+public class PastStateStrategy implements BookingStateFetchStrategy {
     private final BookingRepository bookingRepository;
     private final BookingMapper bookingMapper;
+
     @Override
     public List<BookingDto> getBookings(Long userId) {
         return bookingRepository.findAllByBookerIdAndEndDateIsBefore(userId, LocalDateTime.now())
