@@ -14,9 +14,9 @@ import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
+import ru.practicum.shareit.user.model.User;
 import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.service.UserService;
-import ru.practicum.shareit.user.model.User;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ItemServiceImpl implements ItemService {
 
+    private static final Comparator<Booking> comparatorBookingEndDate = ItemServiceImpl::compareBookingEndDate;
+    private static final Comparator<Booking> comparatorBookingStartDate = ItemServiceImpl::compareBookingStartDate;
     UserService userService;
     ItemRepository itemRepository;
     ItemMapper itemMapper;
@@ -36,9 +38,26 @@ public class ItemServiceImpl implements ItemService {
     BookingRepository bookingRepository;
     CommentRepository commentRepository;
     CommentMapper commentMapper;
-    private static Comparator<Booking> comparatorBookingEndDate = ItemServiceImpl::compareBookingEndDate;
-    private static Comparator<Booking> comparatorBookingStartDate = ItemServiceImpl::compareBookingStartDate;
 
+    private static int compareBookingEndDate(Booking o1, Booking o2) {
+        if (o1.getEndDate().isAfter(o2.getEndDate())) {
+            return 1;
+        } else if (o1.getEndDate().isBefore(o2.getEndDate())) {
+            return -1;
+        } else {
+            return 0;
+        }
+    }
+
+    private static int compareBookingStartDate(Booking o1, Booking o2) {
+        if (o1.getStartDate().isAfter(o2.getStartDate())) {
+            return 1;
+        } else if (o1.getStartDate().isBefore(o2.getStartDate())) {
+            return -1;
+        } else {
+            return 0;
+        }
+    }
 
     @Override
     @Transactional
@@ -182,31 +201,9 @@ public class ItemServiceImpl implements ItemService {
                 .max(comparatorBookingEndDate);
     }
 
-    private static int compareBookingEndDate(Booking o1, Booking o2) {
-        if (o1.getEndDate().isAfter(o2.getEndDate())) {
-            return 1;
-        } else if (o1.getEndDate().isBefore(o2.getEndDate())) {
-            return -1;
-        } else {
-            return 0;
-        }
-    }
-
-
-
     private Optional<Booking> getNextBooking(List<Booking> bookings) {
         return bookings.stream().filter(booking -> booking.getStartDate()
                         .isAfter(LocalDateTime.now().plus(Duration.ofMinutes(1))))
                 .min(comparatorBookingStartDate);
-    }
-
-    private static int compareBookingStartDate(Booking o1, Booking o2) {
-        if (o1.getStartDate().isAfter(o2.getStartDate())) {
-            return 1;
-        } else if (o1.getStartDate().isBefore(o2.getStartDate())) {
-            return -1;
-        } else {
-            return 0;
-        }
     }
 }

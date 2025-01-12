@@ -25,11 +25,12 @@ public class BookingController {
     public BookingController(BookingService bookingService) {
         this.bookingService = bookingService;
     }
+
     @PostMapping
     public BookingDto create(@RequestHeader("X-Sharer-User-Id") Long userId,
-            @Valid @RequestBody BookingRequestDto bookingDto) throws ValidationException, NotFoundException {
-      log.debug("Получен запрос на создание бронирования: {}", bookingDto);
-      return bookingService.create(bookingDto, userId);
+                             @Valid @RequestBody BookingRequestDto bookingDto) throws ValidationException, NotFoundException {
+        log.debug("Получен запрос на создание бронирования: {}", bookingDto);
+        return bookingService.create(bookingDto, userId);
     }
 
     @PatchMapping("/{bookingId}")
@@ -49,7 +50,7 @@ public class BookingController {
 
     @GetMapping
     public Collection<BookingDto> getUserBookings(@RequestHeader("X-Sharer-User-Id") Long userId,
-                                                 @RequestParam(required = false) Optional<Filter> filter) throws NotFoundException {
+                                                  @RequestParam(required = false) Optional<Filter> filter) throws NotFoundException {
         return bookingService.getAllBookings(userId, filter);
     }
 

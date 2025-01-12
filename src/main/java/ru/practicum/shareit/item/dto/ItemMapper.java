@@ -6,7 +6,6 @@ import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.model.User;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -18,7 +17,7 @@ public interface ItemMapper {
     @Mapping(target = "id", source = "itemDto.id")
     @Mapping(target = "name", source = "itemDto.name")
     @Mapping(target = "isAvailable", source = "itemDto.available")
-    Item toItem (ItemDto itemDto, User user);
+    Item toItem(ItemDto itemDto, User user);
 
     @Mapping(target = "lastBooking", source = "lastBookingEndDateInp")
     @Mapping(target = "nextBooking", source = "nextBookingStartDateInp")
