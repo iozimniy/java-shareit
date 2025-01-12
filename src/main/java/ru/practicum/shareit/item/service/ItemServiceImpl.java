@@ -1,6 +1,5 @@
 package ru.practicum.shareit.item.service;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -8,22 +7,20 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import ru.practicum.shareit.booking.model.Booking;
 import ru.practicum.shareit.booking.repository.BookingRepository;
-import ru.practicum.shareit.booking.service.BookingService;
 import ru.practicum.shareit.exceptions.NotFoundException;
 import ru.practicum.shareit.exceptions.ValidationException;
-import ru.practicum.shareit.item.dto.ItemDTOWithBookings;
-import ru.practicum.shareit.item.dto.ItemDto;
-import ru.practicum.shareit.item.dto.ItemMapper;
+import ru.practicum.shareit.item.dto.*;
+import ru.practicum.shareit.item.model.Comment;
 import ru.practicum.shareit.item.model.Item;
+import ru.practicum.shareit.item.repository.CommentRepository;
 import ru.practicum.shareit.item.repository.ItemRepository;
 import ru.practicum.shareit.user.repository.UserRepository;
 import ru.practicum.shareit.user.service.UserService;
+import ru.practicum.shareit.user.model.User;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,6 +34,11 @@ public class ItemServiceImpl implements ItemService {
     ItemMapper itemMapper;
     UserRepository userRepository;
     BookingRepository bookingRepository;
+    CommentRepository commentRepository;
+    CommentMapper commentMapper;
+    private static Comparator<Booking> comparatorBookingEndDate = ItemServiceImpl::compareBookingEndDate;
+    private static Comparator<Booking> comparatorBookingStartDate = ItemServiceImpl::compareBookingStartDate;
+
 
     @Override
     @Transactional
@@ -61,10 +63,16 @@ public class ItemServiceImpl implements ItemService {
     }
 
     @Override
-    public ItemDto getItem(Long itemId) throws NotFoundException {
+    public ItemDTOWithBookings getItem(Long itemId) throws NotFoundException {
         return itemRepository.findById(itemId)
-                .map(itemMapper::toItemDto)
+                .map(item -> mapToItemWithBooking(item, getComments(item.getId())))
                 .orElseThrow(() -> new NotFoundException("Вещь не найдена по id"));
+    }
+
+    private List<CommentDto> getComments(Long itemId) {
+        return commentRepository.findAllByItemId(itemId).stream()
+                .map(commentMapper::toCommentDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -72,16 +80,17 @@ public class ItemServiceImpl implements ItemService {
         validateUserId(userId);
         List<Item> ownersItem = itemRepository.findAllByOwnerId(userId);
         return ownersItem.stream()
-                .map(item -> mapToItemWithBooking(item))
+                .map(item -> mapToItemWithBooking(item, getComments(item.getId())))
                 .collect(Collectors.toList());
     }
 
-    private ItemDTOWithBookings mapToItemWithBooking(Item item) {
+    private ItemDTOWithBookings mapToItemWithBooking(Item item, List<CommentDto> commentsDto) {
         List<Booking> itemBookings = bookingRepository.findAllByItemId(item.getId());
 
         return itemMapper.toItemDTOWithBooking(item,
-                getLastBookingEndDate(itemBookings).orElse(LocalDateTime.now()),
-                getNextBookingStartDate(itemBookings).orElse(LocalDateTime.now()));
+                getLastBooking(itemBookings).orElse(null),
+                getNextBooking(itemBookings).orElse(null),
+                commentsDto);
     }
 
     @Override
@@ -92,6 +101,28 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.findAllByNameOrDescriptionLike(text).stream()
                 .map(itemMapper::toItemDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public CommentDto addComment(Long userId, Long itemId, CommentDto commentDto) throws NotFoundException, ValidationException {
+        User author = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("Автор не найден по id " + userId));
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new NotFoundException("Вещь не найдена по id " + itemId));
+        validateComment(author, item);
+        Comment comment = commentMapper.toComment(commentDto, author, item);
+        commentRepository.save(comment);
+        return commentMapper.toCommentDto(comment);
+    }
+
+    private void validateComment(User author, Item item) throws ValidationException {
+        Booking booking = bookingRepository.findByBookerIdAndItemId(author.getId(), item.getId())
+                .orElseThrow(() -> new jakarta.validation.ValidationException("Автор с id " + author.getId() + " не брар в аренду" +
+                        "вещь с id " + item.getId()));
+        if (booking.getEndDate().isAfter(LocalDateTime.now())) {
+            throw new ValidationException("Срок аренды ещё не закончен");
+        }
     }
 
     private Item updateItem(Item oldItem, Item newItem) {
@@ -145,15 +176,37 @@ public class ItemServiceImpl implements ItemService {
         }
     }
 
-    private Optional<LocalDateTime> getLastBookingEndDate(List<Booking> bookings) {
-        return bookings.stream().map(booking -> booking.getEndDate())
-                .filter(date -> date.isBefore(LocalDateTime.now()))
-                .max(LocalDateTime::compareTo);
+    private Optional<Booking> getLastBooking(List<Booking> bookings) {
+        return bookings.stream()
+                .filter(booking -> booking.getEndDate().isBefore(LocalDateTime.now().minus(Duration.ofMinutes(1))))
+                .max(comparatorBookingEndDate);
     }
 
-    private Optional<LocalDateTime> getNextBookingStartDate(List<Booking> bookings) {
-        return bookings.stream().map(booking -> booking.getStartDate())
-                .filter(date -> date.isAfter(LocalDateTime.now()))
-                .min(LocalDateTime::compareTo);
+    private static int compareBookingEndDate(Booking o1, Booking o2) {
+        if (o1.getEndDate().isAfter(o2.getEndDate())) {
+            return 1;
+        } else if (o1.getEndDate().isBefore(o2.getEndDate())) {
+            return -1;
+        } else {
+            return 0;
+        }
+    }
+
+
+
+    private Optional<Booking> getNextBooking(List<Booking> bookings) {
+        return bookings.stream().filter(booking -> booking.getStartDate()
+                        .isAfter(LocalDateTime.now().plus(Duration.ofMinutes(1))))
+                .min(comparatorBookingStartDate);
+    }
+
+    private static int compareBookingStartDate(Booking o1, Booking o2) {
+        if (o1.getStartDate().isAfter(o2.getStartDate())) {
+            return 1;
+        } else if (o1.getStartDate().isBefore(o2.getStartDate())) {
+            return -1;
+        } else {
+            return 0;
+        }
     }
 }

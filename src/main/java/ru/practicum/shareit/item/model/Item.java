@@ -19,17 +19,17 @@ public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "item_id", nullable = false)
-    Long id;
+    private Long id;
 
-    String name;
-    String description;
+    private String name;
+    private String description;
 
     @Column(name = "is_available", nullable = false)
-    Boolean isAvailable;
+    private Boolean isAvailable;
 
     @ManyToOne
     @JoinColumn(name = "owner_id")
-    User owner;
+    private User owner;
 
-    Long requestId;
+    private Long requestId;
 }

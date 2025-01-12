@@ -16,14 +16,14 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class BookingDto {
-    Long id;
+    private Long id;
     @NotNull
     @DateTimeFormat(pattern = "YYYY-MM-DD'T'HH:mm:ss")
-    LocalDateTime start;
+    private LocalDateTime start;
     @NotNull
     @DateTimeFormat(pattern = "YYYY-MM-DD'T'HH:mm:ss")
-    LocalDateTime end;
-    Item item;
-    User booker;
-    Status status;
+    private LocalDateTime end;
+    private Item item;
+    private User booker;
+    private Status status;
 }
