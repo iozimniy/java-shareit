@@ -11,10 +11,10 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class ItemDto {
-    Long id;
+    private Long id;
     @NotBlank(message = "Название вещи не может быть пустым")
-    String name;
+    private String name;
     @NotBlank(message = "Описание вещи не может быть пустым")
-    String description;
-    Boolean available;
+    private String description;
+    private Boolean available;
 }
